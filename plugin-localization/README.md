@@ -1,0 +1,193 @@
+# plugin-localization
+
+A [Twilio Flex](https://www.twilio.com/flex) plugin that adds **custom UI localization** for **Flex UI 2.17.1**. It ships full translations of all **1,610** Flex UI strings in **12 languages**, registers them in the Flex language selector, and applies right-to-left layout where needed.
+
+Built with **TypeScript** and the Twilio Flex Plugins CLI (`@twilio/flex-plugin` 7.1.2).
+
+---
+
+## Supported locales
+
+Flex UI 2.17.1 ships with only one built-in locale (`en-US`, "English (US)"). This plugin adds the following, each with a complete 1,610-string dictionary:
+
+| Tag     | Language                 | Selector label    | Direction |
+| ------- | ------------------------ | ----------------- | --------- |
+| `zh-CN` | Chinese (Simplified)     | 中文（简体）       | LTR       |
+| `yue`   | Chinese (Cantonese)      | 粵語（繁體）       | LTR       |
+| `ja`    | Japanese                 | 日本語             | LTR       |
+| `ko`    | Korean                   | 한국어             | LTR       |
+| `sw`    | Swahili                  | Kiswahili         | LTR       |
+| `af`    | Afrikaans                | Afrikaans         | LTR       |
+| `ar`    | Arabic (Modern Standard) | العربية            | **RTL**   |
+| `hi`    | Hindi                    | हिन्दी             | LTR       |
+| `id`    | Indonesian               | Bahasa Indonesia  | LTR       |
+| `th`    | Thai                     | ไทย               | LTR       |
+| `tl`    | Tagalog / Filipino       | Tagalog           | LTR       |
+| `vi`    | Vietnamese               | Tiếng Việt        | LTR       |
+
+The source English strings come from `Twilio Flex 2.17.0 en-US.json` (exported from Flex). Each locale file mirrors that format: `{ name, tag, strings }`.
+
+---
+
+## Prerequisites
+
+- **Node.js** — the Twilio CLI bundles its own Node 20 runtime, which this project builds against. (A newer system Node such as v22 is fine for editing; the CLI uses its own.)
+- **Twilio CLI** ≥ 6.x — https://www.twilio.com/docs/twilio-cli/quickstart
+- **Flex Plugins CLI plugin**:
+  ```bash
+  twilio plugins:install @twilio-labs/plugin-flex
+  ```
+- An **active Twilio CLI profile** for your Flex account (required before build/deploy):
+  ```bash
+  twilio profiles:list          # list profiles
+  twilio profiles:use <name>    # activate one
+  ```
+
+---
+
+## Setup
+
+```bash
+cd plugin-localization
+npm install
+```
+
+## Run locally
+
+```bash
+twilio flex:plugins:start
+```
+
+Compiles the plugin and serves Flex at **http://localhost:3000**. `twilio flex:plugins:start` renders an interactive terminal UI and must be run in a real terminal — it will not stay alive when backgrounded.
+
+## Build (production bundle)
+
+```bash
+twilio flex:plugins:build
+```
+
+Output: `build/plugin-localization.js` — a **single** JS bundle (~2.2 MB, because all 12 dictionaries are compiled in). See [Why a single bundle](#why-a-single-bundle-and-why-it-is-large).
+
+## Deploy & release
+
+```bash
+twilio flex:plugins:deploy  --changelog "Add 12-language localization"
+twilio flex:plugins:release --plugin plugin-localization@<version> \
+  --name "localization-release" --description "Custom localization"
+```
+
+---
+
+## How to change the language
+
+**1. End users — Flex language selector.** After the plugin loads, all 12 locales appear in Flex's built-in picker (Settings → Language). Selecting one persists the choice (local-storage key `TWILIO_FLEX_LOCALE_PREFERENCE`) and reloads Flex.
+
+**2. Programmatically.** `src/LocalizationPlugin.tsx` exports a helper:
+
+```ts
+import { changeLocale } from './LocalizationPlugin';
+await changeLocale('ja'); // switches + persists, then Flex reloads
+```
+
+**3. Quick test — browser console** (dev server running):
+
+```js
+Twilio.Flex.Manager.getInstance().localization.setLocalePreference('ar');
+```
+
+If no preference is set, Flex resolves the locale as: **user preference → account default → browser language → `en-US`**.
+
+---
+
+## Project structure
+
+```
+plugin-localization/
+├── public/
+│   └── appConfig.js              # local dev config (git-ignored)
+├── src/
+│   ├── index.ts                  # entry point: FlexPlugin.loadPlugin(LocalizationPlugin)
+│   ├── LocalizationPlugin.tsx    # plugin class — registers locales + merges strings in init()
+│   ├── strings.ts                # locale registry, bundled imports, helpers
+│   └── locales/                  # one JSON per locale (1,610 strings each)
+│       ├── af.json   ar.json   hi.json   id.json
+│       ├── ja.json   ko.json   sw.json   th.json
+│       ├── tl.json   vi.json   yue.json  zh-CN.json
+├── jest.config.js
+├── tsconfig.json
+├── webpack.config.js / webpack.dev.js
+└── package.json
+```
+
+---
+
+## How localization works
+
+Everything happens in `LocalizationPlugin.init()` (`src/LocalizationPlugin.tsx`):
+
+1. **Register locales in the selector.** `manager.localization` is a getter that returns a *fresh object* on every read, but its `availableLocales` is a reference to Flex's internal array. So we **mutate that array in place** (`.push`) — reassigning the property would be silently dropped and the selector would never show our locales. Entries are de-duped by tag.
+
+2. **Merge translated strings.** We read `manager.localization.localeTag` (the active locale), look up its dictionary via `getCustomStrings()`, and assign `manager.strings = { ...manager.strings, ...custom }`. Setting `manager.strings` **adds/updates** entries without wiping Flex's defaults. (The assignment is cast to `Flex.Strings` because spreading widens Flex's dynamic `tr_activity_*` index signature to `string | undefined`.)
+
+3. **Apply text direction.** For locales in `RTL_LOCALES` (currently just `ar`), we set `<html dir="rtl" lang="…">` so the UI mirrors correctly.
+
+`src/strings.ts` is the single source of truth for what ships:
+
+- **Static `import`s** of each `./locales/*.json` — deliberate (see below).
+- `LOCALE_STRINGS` — map of `tag → strings`.
+- `customAvailableLocales` — array of `{ tag, name }` shown in the selector.
+- `RTL_LOCALES` — set of right-to-left tags.
+- `getCustomStrings(tag)` — synchronous lookup; returns `undefined` for unshipped locales.
+- `changeLocale(tag)` — programmatic switch helper (exported from the plugin file).
+
+### Why a single bundle, and why it is large
+
+Locale JSON is imported **statically**, not via dynamic `import()`. Flex serves a plugin as **one JS file** and cannot serve additional webpack chunks. A dynamic `import()` would code-split each locale into its own chunk (`2.plugin-localization.js`, …); at runtime Flex would 404 that request and return the HTML fallback page, producing:
+
+```
+Uncaught SyntaxError: Unexpected token '<'
+Loading chunk 2 failed. (missing: .../2.plugin-localization.js)
+```
+
+Static imports bake every dictionary into the main bundle — correct for Flex, but the bundle grows ~1,610 strings per language (~2.2 MB at 12 locales). The build prints an asset-size warning; that is expected and harmless for a plugin. If you add **many** more languages, consider hosting the locale JSONs externally and pointing Flex's `localesUrl` at them instead of bundling.
+
+---
+
+## Adding a new language
+
+1. Create `src/locales/<tag>.json` in the exported Flex format:
+   ```json
+   { "name": "Display Name", "tag": "<tag>", "strings": { "InputPlaceHolder": "…", "…": "…" } }
+   ```
+   It **must** contain all 1,610 keys, and every value must preserve the source's Handlebars placeholders (`{{name}}`, `{{count}}`, `{{#if isPlural}}…{{/if}}`) and HTML tags exactly.
+2. In `src/strings.ts`:
+   - Add a static import: `import xxLocale from './locales/<tag>.json';`
+   - Add to `LOCALE_STRINGS`: `<tag>: (xxLocale as LocaleFile).strings,`
+   - Add to `customAvailableLocales`: `{ tag: '<tag>', name: 'Display Name' },`
+   - If right-to-left, add its tag to `RTL_LOCALES`.
+3. Run `npx tsc --noEmit` to typecheck, then `twilio flex:plugins:build` to verify a single bundle.
+
+### Translation integrity rules
+
+Only the **values** change — never the keys. Each value must keep:
+
+- **Handlebars placeholders** byte-for-byte, including conditional blocks. Languages without English-style pluralization often want to drop `{{#if isPlural}}s{{/if}}`; keep the tokens as an empty no-op (`{{#if isPlural}}{{/if}}`) so the placeholder set still matches the source.
+- **HTML tags/attributes** (e.g. `<span class='typer-name'>…</span>`, `<b>`, `<br/>`).
+- Leading/trailing whitespace, ellipses (`…`), and brand names (Twilio, Flex, SIP, SMS, WhatsApp), URLs, and email addresses — untranslated.
+
+A locale file is valid only if, for every key, its placeholder multiset and HTML-tag multiset equal the English source's.
+
+---
+
+## Tech stack
+
+- `@twilio/flex-ui` **2.17.1**
+- `@twilio/flex-plugin` **7.1.2**, `@twilio/flex-plugin-scripts` **7.1.2**
+- `react` / `react-dom` **17.0.2**
+- `@twilio-paste/core` **^15.3.1**, `@twilio-paste/icons` **^9.2.0**
+- `typescript` **^4**, `@types/node` **^20**
+
+## Notes
+
+- `public/appConfig.js`, `public/pluginsService.js`, and `build/` are git-ignored.
+- `@types/node` is intentionally pinned to `^20`. A transitively-installed `@types/node` 26 uses syntax that TypeScript 4.9 cannot parse; pinning to 20 avoids spurious `tsc` errors.
