@@ -2,13 +2,13 @@
 
 > **Extending Twilio Flex's native localization to 12 additional languages.**
 
-Twilio Flex UI 2.17.1 ships with a built-in language selector, but only **one** locale out of the box: `en-US` ("English (US)"). This plugin **extends that same native selector** — it does not replace or reinvent it — by registering **12 fully-translated languages** and merging all **1,610** Flex UI strings for each. Users pick a language from the standard Flex modal they already know; everything else just works.
+Twilio Flex ships with a built-in language selector that natively offers **English (US)** (`en-US`), plus **Spanish (Mexico)** (`es-MX`) and **Portuguese (Brazil)** (`pt-BR`) on a provisioned account. This plugin **extends that same native selector** — it does not replace or reinvent it — by registering **12 more fully-translated languages** on top and merging all **1,610** Flex UI strings for each. Users pick a language from the standard Flex modal they already know; everything else just works.
 
 <p align="center">
   <img src="../images/plugin.png" alt="The native Twilio Flex 'Select language' modal, extended by this plugin to list Chinese (Simplified), Cantonese, Japanese, Korean, Swahili, Afrikaans, Arabic and more alongside English (US)" width="720">
 </p>
 
-<p align="center"><em>The plugin plugs directly into Flex's own <strong>Select language</strong> dialog — English (US) is the native default; every language below it is added by this plugin.</em></p>
+<p align="center"><em>The plugin plugs directly into Flex's own <strong>Select language</strong> dialog. English (US) — along with the account's native Spanish (Mexico) and Portuguese (Brazil) — sits alongside the 12 languages added by this plugin.</em></p>
 
 Built with **TypeScript** and the Twilio Flex Plugins CLI (`@twilio/flex-plugin` 7.1.2).
 
@@ -16,7 +16,7 @@ Built with **TypeScript** and the Twilio Flex Plugins CLI (`@twilio/flex-plugin`
 
 ## Supported locales
 
-Flex UI 2.17.1 ships with only one built-in locale (`en-US`). This plugin adds the following, each with a complete 1,610-string dictionary:
+Flex natively offers `en-US`, and — on a provisioned account — `es-MX` (Spanish, Mexico) and `pt-BR` (Portuguese, Brazil). This plugin adds the following **12** on top, each with a complete 1,610-string dictionary:
 
 | Tag     | Language                 | Selector label    | Direction |
 | ------- | ------------------------ | ----------------- | --------- |
