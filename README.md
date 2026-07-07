@@ -5,7 +5,7 @@
 Twilio Flex UI 2.17.1 ships with a built-in language selector, but only **one** locale out of the box: `en-US` ("English (US)"). This plugin **extends that same native selector** — it does not replace or reinvent it — by registering **12 fully-translated languages** and merging all **1,610** Flex UI strings for each. Users pick a language from the standard Flex modal they already know; everything else just works.
 
 <p align="center">
-  <img src="../images/plugin.png" alt="The native Twilio Flex 'Select language' modal, extended by this plugin to list Chinese (Simplified), Cantonese, Japanese, Korean, Swahili, Afrikaans, Arabic and more alongside English (US)" width="720">
+  <img src="images/plugin.png" alt="The native Twilio Flex 'Select language' modal, extended by this plugin to list Chinese (Simplified), Cantonese, Japanese, Korean, Swahili, Afrikaans, Arabic and more alongside English (US)" width="720">
 </p>
 
 <p align="center"><em>The plugin plugs directly into Flex's own <strong>Select language</strong> dialog — English (US) is the native default; every language below it is added by this plugin.</em></p>
