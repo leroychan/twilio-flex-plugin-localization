@@ -41,6 +41,7 @@ The source English strings come from `Twilio Flex 2.17.0 en-US.json` (exported f
 
 ## Prerequisites
 
+- **Native Language selection enabled on your Flex account.** This plugin extends Flex's built-in language selector, so that selector must be turned on first. In the Twilio Console go to **Flex → Contact Center Settings → Opt-in Features → Beta → Enable Language selection**. Without this, the languages this plugin registers have nowhere to appear.
 - **Node.js** — the Twilio CLI bundles its own Node 20 runtime, which this project builds against. (A newer system Node such as v22 is fine for editing; the CLI uses its own.)
 - **Twilio CLI** ≥ 6.x — https://www.twilio.com/docs/twilio-cli/quickstart
 - **Flex Plugins CLI plugin**:
